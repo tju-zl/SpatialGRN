@@ -13,7 +13,7 @@ class SGRN(Module):
         pass
     
 
-class ComputeLoss(Module):
+class ComputeLosses(Module):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         
