@@ -34,4 +34,5 @@ Workflow
 3. embedding construction: 3-D tensor (raw, n-hop neighbors, n times random walk)
 4. training
 5. GRN inference
-6. 
+6. Network analysis
+7. 
