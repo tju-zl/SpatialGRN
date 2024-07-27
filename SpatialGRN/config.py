@@ -17,6 +17,7 @@ def config():
     # model parameters
     parser.add_argument('--infer_mode', type=str, default='simplex', help='resnet or simplex')
     parser.add_argument('--hops', type=int, default=3)
+    parser.add_argument('--embed_dim', type=int, default=10, help='must >= 8')
     parser.add_argument('--latent_dim', type=int, default=50)
     parser.add_argument('--spread', type=float, default=3e-3)
     parser.add_argument('--flow', type=str, default='source_to_target')

@@ -20,11 +20,16 @@ Framework
 Time Line
 ---
 
-- [ ] **7.24** Total framework.
-- [ ] **7.25** Data preprocess, especially ATAC-seq.
-- [ ] **7.26** Model Setting.
-- [ ] **7.27** Attention interpretation.
-- [ ] **7.28** Benchmark of the competing methods.
+- [x] **7.24** Total framework.
+- [x] **7.25** Data preprocess, especially ATAC-seq.
+- [x] **7.26** Model Setting.
+- [ ] **7.27** Attention interpretation, gene regulatory network(cross attention, modification). 
+- Toy model.
+- GraphSAGE+RandomWalk
+- Attention, QKV
+- visualization
+- [ ] **7.28** Visualization.
+- [ ] **7.29** Cross attention, GAS.
 
 Workflow
 ---
@@ -35,4 +40,3 @@ Workflow
 4. training
 5. GRN inference
 6. Network analysis
-7. 

@@ -5,7 +5,7 @@ from scipy.sparse import issparse
 import torch
 
 from .utils import set_random_seed, get_device, get_log_dir, get_output_dir
-from .model import SGRN, ComputeLosses
+from .model import SGRNModel, ComputeLosses
 
 
 class SpatailGRN:
@@ -22,8 +22,10 @@ class SpatailGRN:
         
         # adata preprocess
         
+        
+        
         # model initial
-        self.model = SGRN(args).to(args.device)
+        self.model = SGRNModel(args).to(args.device)
         self.compute_losses = ComputeLosses(args).to(args.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.wegiht_decay)
         
