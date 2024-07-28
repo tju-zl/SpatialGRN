@@ -117,9 +117,8 @@ def gcn_norm(  # noqa: F811
 
 # Similar to graphSage, while the linear transformation is removed. 
 class GeneRep(MessagePassing):
-    def __init__(self, args, in_channels, n_layers, add_self_loops=True, normalize=True):
+    def __init__(self, args, n_layers, add_self_loops=True, normalize=True):
         super().__init__(flow=args.flow, aggr='mean')
-        self.in_channels = in_channels
         self.normalize = normalize
         self.n_hops = args.n_hops
         self.n_layers = n_layers

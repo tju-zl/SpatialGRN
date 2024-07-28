@@ -1,7 +1,6 @@
 import torch
 from torch.nn import Module, ModuleList, Transformer, Softmax
 from torch_geometric.utils import add_remaining_self_loops, spmm
-from .tokenizer import GeneRep
 
 
 class SGRNModel(Module):
@@ -11,9 +10,8 @@ class SGRNModel(Module):
         self.args = args
         self.inchannels = in_channels
         n_layers = args.embed_dim
-        self.gene_embedding = GeneRep(args, in_channels, n_layers)
         
-    def forward(self):
+    def forward(self, emb):
         pass
     
 

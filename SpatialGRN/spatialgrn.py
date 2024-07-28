@@ -10,7 +10,7 @@ from .model import SGRNModel, ComputeLosses
 
 class SpatailGRN:
     def __init__(self, args, adata):
-        set_random_seed(args.seed)
+
         args.device = get_device(args)
         args.log_dir = get_log_dir(args)
         args.output_dir = get_output_dir(args)
@@ -21,7 +21,7 @@ class SpatailGRN:
         
         
         # adata preprocess
-        args.n_spots = adata.n_obs
+        
         
         
         # model initial
@@ -31,7 +31,7 @@ class SpatailGRN:
         
         self.args = args
         
-    def fit(self):
+    def fit(self, emb):
         self.model.train()
         losses = []
         
@@ -52,7 +52,7 @@ class SpatailGRN:
             plt.plot(x, losses)
             plt.show()
             
-    def analysis(self):
+    def eval(self):
         self.model.eval()
         with torch.no_grad():
             z = self.model(self.adata_x, self.edge_index)[0]
