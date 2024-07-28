@@ -23,13 +23,13 @@ Time Line
 - [x] **7.24** Total framework.
 - [x] **7.25** Data preprocess, especially ATAC-seq.
 - [x] **7.26** Model Setting.
-- [ ] **7.27-28** Attention interpretation, gene regulatory network(cross attention, modification).
+- [ ] **7.27-29** Attention interpretation, gene regulatory network(cross attention, modification).
 - Toy model.
 - GraphSAGE+RandomWalk
 - Attention, QKV
 - visualization
-- [ ] **7.28** Visualization.
-- [ ] **7.29** Cross attention, GAS.
+- [ ] **7.30** Visualization.
+- [ ] **7.31** Cross attention, GAS.
 
 Workflow
 ---
