@@ -18,16 +18,18 @@ class SpatailGRN:
             os.makedirs(args.log_dir, exist_ok=True)
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir, exist_ok=True)
-        self.args = args
+        
         
         # adata preprocess
-        
+        args.n_spots = adata.n_obs
         
         
         # model initial
         self.model = SGRNModel(args).to(args.device)
         self.compute_losses = ComputeLosses(args).to(args.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.wegiht_decay)
+        
+        self.args = args
         
     def fit(self):
         self.model.train()

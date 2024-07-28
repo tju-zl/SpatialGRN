@@ -1,9 +1,7 @@
 import torch
 from torch.nn import Module, ModuleList, Transformer, Softmax
-import torch_geometric
-from torch_geometric.nn import MessagePassing, SAGEConv
-from torch_geometric.nn.aggr import Aggregation
-# random walk
+from torch_geometric.utils import add_remaining_self_loops, spmm
+from .tokenizer import GeneRep
 
 
 class SGRNModel(Module):
@@ -19,14 +17,6 @@ class SGRNModel(Module):
         pass
     
 
-# Similar to graphSage, while the linear transformation is removed. 
-class GeneRep(MessagePassing):
-    def __init__(self, args, in_channels, n_layers):
-        super().__init__()
-        self.args = args
-        
-    def forward(self, x, edge_list):
-        pass
 
 
 class BipolarAttention(Module):
@@ -40,4 +30,5 @@ class ComputeLosses(Module):
         
     def loss(self):
         pass
+
 
