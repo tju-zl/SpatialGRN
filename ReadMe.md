@@ -24,10 +24,10 @@ Time Line
 - [x] **7.25** Data preprocess, especially ATAC-seq.
 - [x] **7.26** Model Setting.
 - [ ] **7.27-29** Attention interpretation, gene regulatory network(cross attention, modification).
-- Toy model.
-- GraphSAGE+RandomWalk
-- Attention, QKV
-- visualization
+- Toy model. -ok
+- GraphSAGE+RandomWalk -ok
+- Attention, QKV -awaiting
+- visualization -thinking
 - [ ] **7.30** Visualization.
 - [ ] **7.31** Cross attention, GAS.
 
