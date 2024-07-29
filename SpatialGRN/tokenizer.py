@@ -93,7 +93,6 @@ def gcn_norm(  # noqa: F811
         value = deg_inv_sqrt[row] * value * deg_inv_sqrt[col]
 
         return set_sparse_value(adj_t, value), None
-
     assert flow in ['source_to_target', 'target_to_source']
     num_nodes = maybe_num_nodes(edge_index, num_nodes)
 
@@ -117,25 +116,28 @@ def gcn_norm(  # noqa: F811
 
 # Similar to graphSage, while the linear transformation is removed. 
 class GeneRep(MessagePassing):
-    def __init__(self, args, n_layers, add_self_loops=True, normalize=True):
-        super().__init__(flow=args.flow, aggr='mean')
+    def __init__(self, args, add_self_loops=True, normalize=True, improved = False, cached=False):
+        super().__init__(flow=args.flow, aggr='add')
         self.normalize = normalize
         self.n_hops = args.n_hops
-        self.n_layers = n_layers
-        self.n_walks = n_layers - 1 - args.n_hops
+        self.n_layers = args.embed_dim
+        self.n_walks = args.embed_dim - 1 - args.n_hops
         self.add_self_loops = add_self_loops
+        self.improved = improved
+        self.cached = cached
         self.args = args
         
         self._cached_edge_index = None
         self._cached_adj_t = None
         
     def forward(self, x, edge_index, edge_weight: OptTensor = None):
+        
         if self.normalize:
             if isinstance(edge_index, Tensor):
                 cache = self._cached_edge_index
                 if cache is None:
                     edge_index, edge_weight = gcn_norm(  # yapf: disable
-                        edge_index, edge_weight, x.size(0),
+                        edge_index, edge_weight, x.size(0), self.improved,
                         self.add_self_loops, self.args.flow, x.dtype)
                     if self.cached:
                         self._cached_edge_index = (edge_index, edge_weight)
@@ -155,8 +157,8 @@ class GeneRep(MessagePassing):
         if self.n_walks != len(edge_index_list):
             raise ValueError('hypara of random walk error')
         for edge in edge_index_list:
-            edge_index, edge_weight = gcn_norm(edge, num_nodes=x.size(0), flow=self.args.flow, dtype=x.dtype)
-            emb.append(self.propagate(edge, x=x, edge_weight=edge_weight))
+            edge_index1, edge_weight1 = gcn_norm(edge, edge_weight=None, num_nodes=x.size(0), flow=self.args.flow, dtype=x.dtype)
+            emb.append(self.propagate(edge_index1, x=x, edge_weight=edge_weight1))
 
         return torch.cat(emb).view(self.n_layers,x.size(0),x.size(1)).permute(1,2,0)
     

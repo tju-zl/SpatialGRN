@@ -1,25 +1,33 @@
 import torch
-from torch.nn import Module, Linear
+from torch.nn import Module, Linear, ReLU, Sequential
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 
 
 class SGRNModel(Module):
-    def __init__(self, args, embed_dim) -> None:
+    def __init__(self, args) -> None:
         super().__init__()
         self.latent_dim = args.latent_dim
         self.args = args
-        self.embed_dim = embed_dim
+        self.embed_dim = args.embed_dim
         self.bp_attention = BipolarAttention(args, self.embed_dim)
-        self.compute_loss = ComputeLosses(args)
-        self.decoder = GCNConv(args.latent_dim, args.hvgs, add_self_loops=True)
         
-    def forward(self, emb, edge_index):
+        layers = []
+        hidden_dim = [2*args.latent_dim, 4*args.latent_dim]
+        in_dim = args.latent_dim
+        for dim in hidden_dim:
+            layers.append(Linear(in_dim, dim))
+            layers.append(ReLU())
+            in_dim = dim
+        layers.append(Linear(in_dim, args.hvgs))
+        self.decoder = Sequential(*layers)
+        
+    def forward(self, emb):
         att_weights, z= self.bp_attention(emb)
 
         z = torch.mean(z, dim=1)
         
-        output = self.decoder(z, edge_index)
+        output = self.decoder(z)
         
         return att_weights, z, output
 
@@ -80,9 +88,9 @@ class classicAttention(Module):
 
 class ComputeLosses(Module):
     def __init__(self, args) -> None:
-        super().__init__(args)
+        super().__init__()
+        self.args = args
         
-    def loss(self):
-        pass
-
-
+    def loss(self, x, y):
+        lo = F.mse_loss(x, y)
+        return lo

@@ -3,9 +3,11 @@ from tqdm.notebook import trange
 import matplotlib.pyplot as plt
 from scipy.sparse import issparse
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 
-from .utils import set_random_seed, get_device, get_log_dir, get_output_dir
+from .utils import get_device, get_log_dir, get_output_dir
 from .model import SGRNModel, ComputeLosses
+from .data import prepare_dataset, compute_edge
 
 
 class SpatailGRN:
@@ -19,10 +21,11 @@ class SpatailGRN:
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir, exist_ok=True)
         
-        
         # adata preprocess
-        
-        
+        self.adata = prepare_dataset(args, adata)
+        self.x = torch.FloatTensor(self.adata.X)
+        self.edge_index = compute_edge(args, self.adata).to('cpu')
+        args.n_spots = self.x.size(0)
         
         # model initial
         self.model = SGRNModel(args).to(args.device)
@@ -30,20 +33,29 @@ class SpatailGRN:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.wegiht_decay)
         
         self.args = args
+
         
     def fit(self, emb):
+        if emb.requires_grad:
+            print(emb.requires_grad)
+            emb = emb.detach()
+        dataset = TensorDataset(emb, self.x)
+        dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
+        
         self.model.train()
         losses = []
         
         for ep in trange(self.args.max_epoch):
-            self.optimizer.zero_grad()
-            z = self.model()
-            loss = self.compute_losses.loss(z)
-            losses.append(loss.item())
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
-            self.optimizer.step()
-            
+            for batch in dataloader:
+                embedding, xx = batch
+                self.optimizer.zero_grad()
+                output = self.model(embedding.to(self.args.device))[-1]
+                loss = self.compute_losses.loss(xx.to(self.args.device), output)
+                losses.append(loss.item())
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
+                self.optimizer.step()
+                
             if ep % (self.args.max_epoch/self.args.log_steps) == 0 and self.args.visualize:
                     print(f'EP[%4d]: loss=%.4f.' % (ep, loss.item()))
             
@@ -52,11 +64,22 @@ class SpatailGRN:
             plt.plot(x, losses)
             plt.show()
             
-    def eval(self):
+    def eval(self, emb):
+        if emb.requires_grad:
+            print(emb.requires_grad)
+            emb = emb.detach()
+        # dataset = TensorDataset(emb)
+        # dataloader = DataLoader(dataset, batch_size=100, shuffle=False)    
         self.model.eval()
+        # i=0
         with torch.no_grad():
-            z = self.model(self.adata_x, self.edge_index)[0]
-        
+            # att = []
+            # for batch in dataloader:
+                # print(i)
+                # i+=1
+                # att.append(self.model(batch[0].to(self.args.device))[0].detach().cpu())
+        # attention = torch.cat(att).view(self.args.n_spots, self.args.hvgs, self.args.hvgs)
         # todo some functions of downstream analysis
-        self.adata.obsm['latent'] = z.to('cpu').detach().numpy()
-        return self.adata
+        # self.adata.obsm['grn_mat'] = attention.numpy()
+            return self.model(emb.to(self.args.device))[0].detach().cpu()
+        # return self.adata

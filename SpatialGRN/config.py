@@ -11,8 +11,10 @@ def config():
 
     # data preparation
     parser.add_argument('--dataset_path', type=str, default='')
-    parser.add_argument('--srt_resolution', default=150, type=int)
+    parser.add_argument('--srt_resolution', default=2, type=int)
     parser.add_argument('--clusters', default=0, type=int)
+    parser.add_argument('--max_neighbors', default=8, type=int)
+    parser.add_argument('--hvgs', default=3000, type=int)
     parser.add_argument('--n_hops', default=3, type=int)
     parser.add_argument('--n_randomwalk', default=[5, 10, 15], type=list, help='sample path distance of random walk')
     parser.add_argument('--q_randomwalk', default=[1, 1.5], type=list, help='in-out of random walk')
@@ -33,8 +35,8 @@ def config():
     parser.add_argument('--tau', type=float, default=1)
 
     # output configuration
-    parser.add_argument('--log_file', type=str, default='./Log')
-    parser.add_argument('--out_file', type=str, default='./Output')
+    parser.add_argument('--log_file', type=str, default='../Log')
+    parser.add_argument('--out_file', type=str, default='../Output')
 
     # analysis configuration
     parser.add_argument('--visualize', default=True, action='store_true')

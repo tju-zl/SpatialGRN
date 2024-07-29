@@ -44,19 +44,20 @@ def random_walk_path(args, edge_index):
     data = Data(edge_index=edge_index, num_nodes=args.n_spots)
     G = to_networkx(data)
     for length in args.n_randomwalk:
-        edge_list.append(Node2Vec(G, p=1, q=args.q[0], walk_length=length, num_walks=1, workers=4).walks)
-        edge_list.append(Node2Vec(G, p=1, q=args.q[1], walk_length=length, num_walks=1, workers=4).walks)
+        edge_list.append(Node2Vec(G, p=1, q=args.q_randomwalk[0], walk_length=length, num_walks=1, workers=1, quiet=True).walks)
+        edge_list.append(Node2Vec(G, p=1, q=args.q_randomwalk[1], walk_length=length, num_walks=1, workers=1, quiet=True).walks)
     
     walks_int = []
     for edge in edge_list:
-        walks_int.append([int(node) for node in walk] for walk in edge)
+        walks_int.append([[int(node) for node in walk] for walk in edge])
     
     edge_index_list = []
-    for k, edge in enumerate(walks_int):
+    n_walk_list = [item for item in args.n_randomwalk for _ in range(2)]
+    for k in range(len(n_walk_list)):
         edges = [[],[]]
-        for i in range(len(edges)):
-            for j in range(args.n_randomwalk[k]):
-                edges[0].append(edges[i][j])
+        for i in range(args.n_spots):
+            for j in range(n_walk_list[k]):
+                edges[0].append(walks_int[k][i][j])
                 edges[1].append(i)
-        edge_index_list.append(torch.tensor(np.array(edge), dtype=torch.long))
+        edge_index_list.append(torch.tensor(np.array(edges), dtype=torch.long))
     return edge_index_list
