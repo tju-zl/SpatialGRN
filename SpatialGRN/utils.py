@@ -61,3 +61,9 @@ def random_walk_path(args, edge_index):
                 edges[1].append(i)
         edge_index_list.append(torch.tensor(np.array(edges), dtype=torch.long))
     return edge_index_list
+
+
+def find_neighbors(node, edge_index):
+    row, col = edge_index
+    neighbors = col[row == node]
+    return neighbors

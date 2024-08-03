@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.sparse import issparse
 import torch
 from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
 
 from .utils import get_device, get_log_dir, get_output_dir
 from .model import SGRNModel, ComputeLosses
@@ -40,7 +41,7 @@ class SpatailGRN:
             print(emb.requires_grad)
             emb = emb.detach()
         dataset = TensorDataset(emb, self.x)
-        dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
+        dataloader = DataLoader(dataset, batch_size=128, shuffle=True)
         
         self.model.train()
         losses = []
@@ -68,18 +69,27 @@ class SpatailGRN:
         if emb.requires_grad:
             print(emb.requires_grad)
             emb = emb.detach()
-        # dataset = TensorDataset(emb)
-        # dataloader = DataLoader(dataset, batch_size=100, shuffle=False)    
+        dataset = TensorDataset(emb)
+        dataloader = DataLoader(dataset, batch_size=128, shuffle=False)
+        z_save_path = os.path.join(self.args.output_dir, os.path.basename(self.args.dataset_path)+'_latent.npy')
+        att_save_path = os.path.join(self.args.output_dir, os.path.basename(self.args.dataset_path)+'_att.npy')
         self.model.eval()
-        # i=0
+        self.args.eval=True
         with torch.no_grad():
-            # att = []
-            # for batch in dataloader:
-                # print(i)
-                # i+=1
-                # att.append(self.model(batch[0].to(self.args.device))[0].detach().cpu())
-        # attention = torch.cat(att).view(self.args.n_spots, self.args.hvgs, self.args.hvgs)
+            for i, batch in enumerate(dataloader):
+                att, z = self.model(batch[0].to(self.args.device))
+                for i in range (att.shape[0]):
+                    top_att = np.sort(att[i].flatten())[-10:]
+                if i == 0:
+                    np.save(att_save_path, att.cpu().numpy())
+                    np.save(z_save_path, z.cpu().numpy())
+                else:
+                    with open(att_save_path, 'ab') as f:
+                        np.save(f, att.cpu().numpy())
+                    with open(z_save_path, 'ab') as f:
+                        np.save(f, z.cpu().numpy())
+        return att_save_path, z_save_path
         # todo some functions of downstream analysis
         # self.adata.obsm['grn_mat'] = attention.numpy()
-            return self.model(emb.to(self.args.device))[0].detach().cpu()
+        # return self.model(emb.to(self.args.device))[0].detach().cpu()
         # return self.adata

@@ -23,16 +23,17 @@ def config():
     parser.add_argument('--infer_mode', type=str, default='simplex', help='resnet or simplex')
     parser.add_argument('--hops', type=int, default=3)
     parser.add_argument('--embed_dim', type=int, default=10, help='odd number')
-    parser.add_argument('--latent_dim', type=int, default=50)
+    parser.add_argument('--latent_dim', type=int, default=30)
     parser.add_argument('--spread', type=float, default=3e-3)
     parser.add_argument('--flow', type=str, default='source_to_target')
 
     # training control
-    parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument('--max_epoch', type=int, default=1000)
+    parser.add_argument('--lr', type=float, default=0.0005)
+    parser.add_argument('--max_epoch', type=int, default=20)
     parser.add_argument('--wegiht_decay', type=float, default=1e-6)
     parser.add_argument('--log_steps', type=int, default=10)
     parser.add_argument('--tau', type=float, default=1)
+    parser.add_argument('--eval', default=False, action='store_true')
 
     # output configuration
     parser.add_argument('--log_file', type=str, default='../Log')
