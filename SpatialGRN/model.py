@@ -22,12 +22,12 @@ class SGRNModel(Module):
         #     in_dim = dim
         # layers.append(Linear(in_dim, args.hvgs))
         # self.decoder = Sequential(*layers)
-        self.decoder = Linear(args.embed_dim, args.hvgs)
+        self.decoder = Linear(args.hvgs, args.hvgs)
         
     def forward(self, emb):
         att_weights, z= self.bp_attention(emb)
 
-        z = torch.mean(z, dim=1)
+        z = torch.mean(z, dim=0)
         
         if self.args.eval:
             return att_weights, z
@@ -60,7 +60,6 @@ class BipolarAttention(Module):
         
         att_output = torch.matmul(att_weights, V)
         output = self.out(att_output)
-            
         return att_weights, output
 
 
