@@ -24,7 +24,7 @@ class SpatailGRN:
         
         # adata preprocess
         self.adata = prepare_dataset(args, adata)
-        self.x = torch.FloatTensor(self.adata.X)
+        self.x = torch.FloatTensor(self.adata.X.toarray())
         self.edge_index = compute_edge(args, self.adata).to('cpu')
         args.n_spots = self.x.size(0)
         
