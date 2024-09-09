@@ -31,3 +31,7 @@ def compute_edge(args, adata):
     edge_index = to_undirected(edge_index)
     print('Average spatial edge:', edge_index.size()[1] / adata.n_obs)
     return edge_index
+
+
+def sampler(args, x):
+    pass

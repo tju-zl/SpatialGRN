@@ -5,7 +5,7 @@ from torch_geometric.nn import GCNConv
 from .module import classicAttention, BipolarAttention
 
 
-class SGRNModel(Module):
+class SGModel(Module):
     def __init__(self, args) -> None:
         super().__init__()
         self.latent_dim = args.latent_dim

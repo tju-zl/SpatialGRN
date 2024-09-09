@@ -1,5 +1,6 @@
 import torch
 from torch.nn import Linear, Module, Softmax
+import torch.nn.functional as F
 
 
 class Attention(Module):
