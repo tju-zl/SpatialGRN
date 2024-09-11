@@ -3,14 +3,8 @@ from torch.nn import Linear, Module, Softmax
 import torch.nn.functional as F
 
 
-class Attention(Module):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        
-    def forward(self):
-        pass
-
-class BipolarAttention(Module):
+# tanh attention
+class BiAttention(Module):
     def __init__(self, args, embed_dim):
         super().__init__()
         self.embed_dim = embed_dim
@@ -36,7 +30,8 @@ class BipolarAttention(Module):
         return att_weights, output
 
 
-class classicAttention(Module):
+# valina attention
+class Attention(Module):
         def __init__(self, args, embed_dim):
             super().__init__()
             self.embed_dim = embed_dim

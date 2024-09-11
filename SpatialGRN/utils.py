@@ -19,11 +19,13 @@ def get_device(args):
     return device
 
 
+# Training info
 def get_log_dir(args):
     log_dir = '../Log/' + '_'.join([os.path.basename(args.dataset_path).split('.')[0], args.version])
     return log_dir
 
 
+# Results info
 def get_output_dir(args):
     output_dir = '../Output/' + '_'.join([os.path.basename(args.dataset_path), args.version])
     return output_dir
@@ -67,5 +69,33 @@ def find_neighbors(node, edge_index):
     row, col = edge_index
     neighbors = col[row == node]
     return neighbors
+
+
+class EarlyStopping:
+    def __init__(self, patience=10, delta=0.001, path='best_model.pt'):
+        self.patience = patience
+        self.delta = delta
+        self.path = path
+        self.counter = 0
+        self.best_loss = None
+        self.early_stop = False
+        
+    def __call__(self, val_loss, model):
+        if self.best_loss is None:
+            self.best_loss = val_loss
+            self.save_check_point(val_loss, model)
+        elif val_loss < self.best_loss - self.delta:
+            self.best_loss = val_loss
+            self.save_check_point(val_loss, model)
+            self.counter = 0
+        else:
+            self.counter += 1
+            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+            
+    def save_check_point(self, val_loss, model):
+        torch.save(model.state_dict(), self.path)
+        print(f'Validation loss ({val_loss:.6f}) decreased. Saving model to {self.path}')
 
 

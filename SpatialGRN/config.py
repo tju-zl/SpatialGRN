@@ -21,14 +21,15 @@ def config():
 
     # model parameters
     parser.add_argument('--hops', type=int, default=3)
-    parser.add_argument('--embed_dim', type=int, default=64, help='token dim')
-    parser.add_argument('--latent_dim', type=int, default=64)
+    parser.add_argument('--token_dim', type=int, default=64, help='dims of gene token')
+    parser.add_argument('--latent_dim', type=int, default=64, help='dim of QKV')
     parser.add_argument('--flow', type=str, default='source_to_target')
 
     # training control
-    parser.add_argument('--lr', type=float, default=0.0001)
+    parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--max_epoch', type=int, default=20)
-    parser.add_argument('--minibatch', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--early_stop', default=True, action='store_true')
     parser.add_argument('--wegiht_decay', type=float, default=1e-6)
     parser.add_argument('--log_steps', type=int, default=10)
     parser.add_argument('--tau', type=float, default=1)

@@ -9,6 +9,10 @@ import numpy as np
 from .utils import get_device, get_log_dir, get_output_dir
 from .model import SGRNModel, ComputeLosses
 from .data import prepare_dataset, compute_edge
+from SpatialGRN.visaul import *
+#In[] 
+from torch.optim.lr_scheduler import StepLR
+
 
 
 class SpatailGRN:
@@ -59,11 +63,8 @@ class SpatailGRN:
                 
             if ep % (self.args.max_epoch/self.args.log_steps) == 0 and self.args.visualize:
                     print(f'EP[%4d]: loss=%.4f.' % (ep, loss.item()))
-            
-        if self.args.visualize:
-            x = range(1, len(losses)+1)
-            plt.plot(x, losses)
-            plt.show()
+        
+        plot_loss_curve(self.args, losses)
             
     def eval(self, emb):
         if emb.requires_grad:
@@ -93,3 +94,5 @@ class SpatailGRN:
         # self.adata.obsm['grn_mat'] = attention.numpy()
         # return self.model(emb.to(self.args.device))[0].detach().cpu()
         # return self.adata
+
+# %%

@@ -2,7 +2,7 @@ import torch
 from torch.nn import Module, Linear, ReLU, Sequential
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
-from .module import classicAttention, BipolarAttention
+from .module import Attention, BiAttention
 
 
 class SGModel(Module):
@@ -12,7 +12,7 @@ class SGModel(Module):
         self.args = args
         self.embed_dim = args.embed_dim
         # self.bp_attention = BipolarAttention(args, self.embed_dim)
-        self.bp_attention = classicAttention(args, self.embed_dim)
+        self.bp_attention = Attention(args, self.embed_dim)
         
         # layers = []
         # hidden_dim = [2*args.latent_dim, 4*args.latent_dim]
@@ -46,3 +46,5 @@ class ComputeLosses(Module):
     def loss(self, x, y):
         lo = F.mse_loss(x, y)
         return lo
+
+
