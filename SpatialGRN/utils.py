@@ -21,12 +21,16 @@ def get_device(args):
 
 # Training info
 def get_log_dir(args):
+    if not os.path.exists('../Log/'):
+        os.makedirs('../Log/')
     log_dir = '../Log/' + '_'.join([os.path.basename(args.dataset_path).split('.')[0], args.version])
     return log_dir
 
 
 # Results info
 def get_output_dir(args):
+    if not os.path.exists('../Output/'):
+        os.makedirs('../Output/')
     output_dir = '../Output/' + '_'.join([os.path.basename(args.dataset_path), args.version])
     return output_dir
 
@@ -40,7 +44,8 @@ def set_random_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     
-    
+
+# random walk path generation
 def random_walk_path(args, edge_index):
     edge_list = []
     data = Data(edge_index=edge_index, num_nodes=args.n_spots)
@@ -65,12 +70,14 @@ def random_walk_path(args, edge_index):
     return edge_index_list
 
 
+# find neighbors of a node
 def find_neighbors(node, edge_index):
     row, col = edge_index
     neighbors = col[row == node]
     return neighbors
 
 
+# early stopping method
 class EarlyStopping:
     def __init__(self, patience=10, delta=0.001, path='best_model.pt'):
         self.patience = patience
@@ -98,4 +105,16 @@ class EarlyStopping:
         torch.save(model.state_dict(), self.path)
         print(f'Validation loss ({val_loss:.6f}) decreased. Saving model to {self.path}')
 
+
+# gene model clustering
+def gene_cluster(emb):
+    pass
+
+
+# load models
+def load_model(model, path):
+    try:
+        model.load_state_dict(torch.load(path))
+    except:
+        raise(f'{path} not find!')
 
