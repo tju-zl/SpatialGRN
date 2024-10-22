@@ -21,6 +21,7 @@ def config():
 
     # model parameters
     parser.add_argument('--hops', type=int, default=3)
+    parser.add_argument('--decoder', type=str, default='NB', help='ZINB, NB or MLP')
     parser.add_argument('--token_dim', type=int, default=64, help='dims of gene token')
     parser.add_argument('--latent_dim', type=int, default=64, help='dim of QKV')
     parser.add_argument('--flow', type=str, default='source_to_target')

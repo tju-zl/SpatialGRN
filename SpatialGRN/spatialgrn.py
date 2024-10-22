@@ -10,9 +10,8 @@ from .utils import get_device, get_log_dir, get_output_dir, EarlyStopping
 from .model import SGRNModel, ComputeLosses
 from .data import prepare_dataset, compute_edge
 from SpatialGRN.visaul import *
-#In[]
-from torch.optim.lr_scheduler import StepLR
 
+from torch.optim.lr_scheduler import StepLR
 
 
 class SpatailGRN:
@@ -109,5 +108,3 @@ class SpatailGRN:
         # self.adata.obsm['grn_mat'] = attention.numpy()
         # return self.model(emb.to(self.args.device))[0].detach().cpu()
         # return self.adata
-
-# %%

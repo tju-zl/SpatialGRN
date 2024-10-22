@@ -13,7 +13,7 @@ class SGModel(Module):
         self.embed_dim = args.embed_dim
         # self.bp_attention = BipolarAttention(args, self.embed_dim)
         self.bp_attention = Attention(args, self.embed_dim)
-        
+
         # layers = []
         # hidden_dim = [2*args.latent_dim, 4*args.latent_dim]
         # in_dim = args.latent_dim
@@ -24,7 +24,7 @@ class SGModel(Module):
         # layers.append(Linear(in_dim, args.hvgs))
         # self.decoder = Sequential(*layers)
         self.decoder = Linear(args.hvgs, args.hvgs)
-        
+
     def forward(self, emb):
         att_weights, z= self.bp_attention(emb)
 
