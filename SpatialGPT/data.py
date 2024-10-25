@@ -38,3 +38,27 @@ def compute_edge(args, adata):
 
 def sampler(args, x):
     pass
+
+
+class Preprocessor:
+    """
+    Data preprocess using Scanpy pipline: 
+    1. QC(filtering cell and genes);
+    2. Normalization and Log1p (not scale);
+    
+    Graph Construction:
+    3. Compute the r-KNN graph;
+    4. 
+    
+    """
+    def __init__(self,
+                 filter_gene_by_counts=True,
+                 filter_cell_by_counts=True,
+                 normalize_total=1e4,
+                 result_norm_key='X_normed',
+                 log1p= True,
+                 result_log1p_key='X_log1p',
+                 ):
+        pass
+    
+    

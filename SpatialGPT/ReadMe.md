@@ -1,0 +1,4 @@
+File Architecture
+---
+
+SpatialGPT

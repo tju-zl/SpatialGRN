@@ -9,7 +9,7 @@ import numpy as np
 from .utils import get_device, get_log_dir, get_output_dir, EarlyStopping
 from .model import SGRNModel, ComputeLosses
 from .data import prepare_dataset, compute_edge
-from SpatialGRN.visaul import *
+from SpatialGPT.visaul import *
 
 from torch.optim.lr_scheduler import StepLR
 

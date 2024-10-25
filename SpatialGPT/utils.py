@@ -118,3 +118,13 @@ def load_model(model, path):
     except:
         raise(f'{path} not find!')
 
+
+
+def get_attention(data, model):
+    pass
+
+def get_cls(data,model):
+    pass
+
+def get_reconstruction(data, model):
+    pass
