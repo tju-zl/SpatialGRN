@@ -20,11 +20,15 @@ def config():
     parser.add_argument('--q_randomwalk', default=[1, 1.5], type=list, help='in-out of random walk')
 
     # model parameters
-    parser.add_argument('--hops', type=int, default=3)
     parser.add_argument('--decoder', type=str, default='NB', help='ZINB, NB or MLP')
     parser.add_argument('--token_dim', type=int, default=64, help='dims of gene token')
     parser.add_argument('--latent_dim', type=int, default=64, help='dim of QKV')
     parser.add_argument('--flow', type=str, default='source_to_target')
+
+    # Transformer Module parameters
+    parser.add_argument('--d_model', type=int, default=64)
+    parser.add_argument('--n_head', type=int, default=8)
+
 
     # training control
     parser.add_argument('--lr', type=float, default=1e-4)

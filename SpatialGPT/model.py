@@ -5,6 +5,16 @@ from torch_geometric.nn import GCNConv
 from .module import Attention, BiAttention
 
 
+class TransformerEncoder(Module):
+    def __init__(self, args) -> None:
+        super().__init__()
+        self.d_model = args.d_model
+        
+        
+        
+        
+
+
 class SGModel(Module):
     def __init__(self, args) -> None:
         super().__init__()

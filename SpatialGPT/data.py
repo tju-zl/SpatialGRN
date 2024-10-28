@@ -1,8 +1,37 @@
 import scanpy as sc
 import numpy as np
 import torch
+import time
+from datasets import load_dataset
 from torch_geometric.nn.pool import radius_graph
 from torch_geometric.utils import to_undirected
+
+
+def get_srt(args, dataset=None, data_path=None, make_adata=True):
+    """ All SRT datasets are stored in Hugging Face Hub.
+    Args:
+        args (NameSpace): global configeration.
+        dataset (Str, optional): the name of dataset. Defaults to 'all'.
+        data_path (Str, optional): dataset dictionary. Defaults to args.dataset_path.
+        make_adata (bool, optional): generate h5ad adata file. Defaults to True.
+    """
+    star_t = time.time()
+    assert (dataset), 'If you don\'t provide the specific dataset, all available datasets will download.'
+    if data_path is None:
+        data_path = args.dataset_path
+    
+    if dataset == '12-sclice_DLPFC':
+        # well known benchmark dataset for spatial clustering methods.
+        url = 'SpatialOmics/12-slices_DLPFC'
+        slices = ['151507', '151508', '151509', '151510', '151670', '151671', '151672', '151673', '151374', '151675', '151676']
+        dataset = load_dataset(url, cache_dir=data_path)
+        print(f'dataset: {dataset} has downloaded to {dataset.cache_files}')
+        if make_adata:
+            pass
+    
+    elif dataset == None:
+        pass
+
 
 
 def prepare_dataset(args, adata):
