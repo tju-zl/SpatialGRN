@@ -57,4 +57,10 @@ class Attention(Module):
             
             return att_weights, output
 
-
+class TransformerModel(Module):
+    def __init__(self, *args, **kwargs) -> None:
+         super().__init__(*args, **kwargs)
+         pass
+     
+    def forward(self, args, ):
+        pass

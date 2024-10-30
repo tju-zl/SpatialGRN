@@ -5,11 +5,12 @@ from scipy.sparse import issparse
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
+import wandb
 
 from .utils import get_device, get_log_dir, get_output_dir, EarlyStopping
 from .model import SGRNModel, ComputeLosses
 from .data import prepare_dataset, compute_edge
-from SpatialGPT.visaul import *
+from SpatialGPT.visualization import *
 
 from torch.optim.lr_scheduler import StepLR
 
@@ -32,6 +33,9 @@ class SpatailGRN:
         self.x = torch.FloatTensor(self.adata.X.toarray())
         self.edge_index = compute_edge(args, self.adata).to('cpu')
         args.n_spots = self.x.size(0)
+        
+        # setting wandb
+        wandb.init(project='SpatialGPT', config=self.args)  # following args must consistent with config
         
         # model initial
         self.model = SGRNModel(args).to(args.device)

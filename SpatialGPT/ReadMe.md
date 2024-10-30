@@ -6,7 +6,7 @@
 | `spatialgpt.py`          | Main program file, used to start SpatialGPT |
 | `config.py`      | Configuration file, containing basic settings for SpatialGPT |
 | `utils.py`   | Collection of helper functions        |
-| `data.py`            | Data preprocess, containing all the data preprocess functions used by SpatialGPT |
+| `data.py`            | Data download, containing all the data preprocess functions used by SpatialGPT |
 | `gene2index.csv`   | Gene token embedding index globally       |
 | `visaul.py`  | Visaulization functions for SpatialGPT |
 | `model.py`  | Model for SpatialGPT |
@@ -21,7 +21,6 @@
 
 | Dataset | Technology | Spots (~) | Genes | Download |
 |---|---|---|---|---|
-| 12-slice DLPFC | 10X Visium | 3460~4789 | 33538 | [Source]([www](https://www.nature.com/articles/s41593-020-00787-0))|
-| Human Breast Cancer | 10X Visium | 3798 | 36601 | [Source](https://support.10xgenomics.com/spatial-gene-expression/datasets/1.1.0/V1_Breast_Cancer_Block_A_Section_1) |
-| 12-slice Mouse Olfactory Bulb| ST | 231~282 | 15284-16675 | [Source](Source)|
-|
+| `12-slice_DLPFC` | 10X Visium | 3460~4789 | 33538 | [Source]([www](https://www.nature.com/articles/s41593-020-00787-0))|
+| `HumanBreastCancer` | 10X Visium | 3798 | 36601 | [Source](https://support.10xgenomics.com/spatial-gene-expression/datasets/1.1.0/V1_Breast_Cancer_Block_A_Section_1) |
+| `12-slice_MouseOlfactoryBulb`| ST | 231~282 | 15284-16675 | [Source](Source)|
