@@ -5,8 +5,12 @@ import time
 from datasets import load_dataset
 from torch_geometric.nn.pool import radius_graph
 from torch_geometric.utils import to_undirected
+import re
+import anndata as ad
+import pandas as pd
 
 
+# 0. download dataset (in preparation, coming soon).
 def get_srt(args, dataset=None, data_path=None, make_adata=True):
     """ All SRT datasets are stored in Hugging Face Hub.
     Args:
@@ -33,7 +37,19 @@ def get_srt(args, dataset=None, data_path=None, make_adata=True):
         pass
 
 
+# 1. remove repeat gene (mean), before the prepare step.
+def rr_gene(adata):
+    raw_dim = len(adata.var_names)
+    adata.var_names = [ re.sub(r'\.\d+$', '', gene) for gene in adata.var_names]
+    df = pd.DataFrame(adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X, columns=adata.var_names, index=adata.obs_names)
+    df_mean = df.groupby(df.columns, axis=1).mean().round().astype(int)
+    adata_new = ad.AnnData(df_mean.values, obs=adata.obs, var=pd.DataFrame(index=df_mean.columns))
+    remove_dim = len(adata_new.var_names)
+    print(f'removed {remove_dim-raw_dim} repreat genes.')
+    return adata_new
 
+
+# 2. preprocess dataset (filter genes and cells, hvg, norm if mlp)
 def prepare_dataset(args, adata):
     adata.var_names_make_unique()
     # filter genes and cells (quality control)
@@ -47,7 +63,7 @@ def prepare_dataset(args, adata):
             sc.pp.normalize_total(adata, target_sum=1e4)
             sc.pp.log1p(adata)
             sc.pp.scale(adata)
-        adata_hvg = adata[:, adata.var['highly_variable']]
+        adata_hvg = adata[:, adata.var['highly_variable']]    
         return adata_hvg
     else:
         if args.decoder == 'MLP':
@@ -55,8 +71,9 @@ def prepare_dataset(args, adata):
             sc.pp.log1p(adata)
             sc.pp.scale(adata, zero_center=True, max_valu=10)
         return adata
-    
 
+
+# 3. compute edges of spots using coordinates.
 def compute_edge(args, adata):
     coordinate = torch.FloatTensor(adata.obsm['spatial']).to(args.device)
     edge_index = radius_graph(coordinate, args.srt_resolution, max_num_neighbors=args.max_neighbors, flow=args.flow)
@@ -65,29 +82,6 @@ def compute_edge(args, adata):
     return edge_index
 
 
-def sampler(args, x):
+# 4. dataloader
+def dataset_loader(args, data):
     pass
-
-
-class Preprocessor:
-    """
-    Data preprocess using Scanpy pipline: 
-    1. QC(filtering cell and genes);
-    2. Normalization and Log1p (not scale);
-    
-    Graph Construction:
-    3. Compute the r-KNN graph;
-    4. 
-    
-    """
-    def __init__(self,
-                 filter_gene_by_counts=True,
-                 filter_cell_by_counts=True,
-                 normalize_total=1e4,
-                 result_norm_key='X_normed',
-                 log1p= True,
-                 result_log1p_key='X_log1p',
-                 ):
-        pass
-    
-    

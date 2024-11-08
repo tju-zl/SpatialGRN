@@ -45,15 +45,20 @@ def set_random_seed(seed):
     torch.backends.cudnn.benchmark = False
     
 
-# random walk path generation
+# random walk path generation, source to target.
 def random_walk_path(args, edge_index):
+    set_random_seed(args.seed)
     edge_list = []
     data = Data(edge_index=edge_index, num_nodes=args.n_spots)
     G = to_networkx(data)
-    for length in args.n_randomwalk:
-        edge_list.append(Node2Vec(G, p=1, q=args.q_randomwalk[0], walk_length=length, num_walks=1, workers=1, quiet=True).walks)
-        edge_list.append(Node2Vec(G, p=1, q=args.q_randomwalk[1], walk_length=length, num_walks=1, workers=1, quiet=True).walks)
-    
+    n_rm = args.n_randomwalk
+    p_rm = args.p_randomwalk
+    q_rm = args.q_randomwalk
+    for q_v in np.arange(q_rm[0], q_rm[1], -0.1):
+        for length in range(n_rm[0], n_rm[1], 2):
+            for p_v in p_rm:
+                edge_list.append(Node2Vec(G, p=p_v, q=q_v, walk_length=length, num_walks=1, workers=1, quiet=True).walks)
+
     walks_int = []
     for edge in edge_list:
         walks_int.append([[int(node) for node in walk] for walk in edge])

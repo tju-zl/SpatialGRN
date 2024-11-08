@@ -1,8 +1,11 @@
 from typing import Optional
 
+import numpy as np
+
 import torch
 from torch import Tensor
-from torch.nn import Parameter
+from torch.nn import Parameter, Module
+import torch.nn as nn
 
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.nn.dense.linear import Linear
@@ -28,6 +31,7 @@ from torch_geometric.utils.sparse import set_sparse_value
 from .utils import random_walk_path
 
 
+## * from MPNN based GCN
 @torch.jit._overload
 def gcn_norm(  # noqa: F811
         edge_index, edge_weight, num_nodes, improved, add_self_loops, flow,
@@ -114,14 +118,15 @@ def gcn_norm(  # noqa: F811
     return edge_index, edge_weight
 
 
+## * Multi-scale gene expression embedding: Node2vec + MPNN-GCN
 # Similar to graphSage, while the linear transformation is removed. 
 class GeneRep(MessagePassing):
     def __init__(self, args, add_self_loops=True, normalize=True, improved = False, cached=False):
         super().__init__(flow=args.flow, aggr='add')
         self.normalize = normalize
-        self.n_hops = args.n_hops
-        self.n_layers = args.embed_dim
-        self.n_walks = args.embed_dim - 1 - args.n_hops
+        self.n_gcns = args.n_gcn
+        self.n_layers = args.n_gcn + args.n_randwalk
+        self.n_walks = args.n_randwalk
         self.add_self_loops = add_self_loops
         self.improved = improved
         self.cached = cached
@@ -149,7 +154,7 @@ class GeneRep(MessagePassing):
         emb.append(x)
         
         # embed k-hop neighbors
-        for i in range(self.n_hops):
+        for i in range(self.n_gcns):
             emb.append(self.propagate(edge_index, x=emb[i], edge_weight=edge_weight))
         
         # embed k-times random walks
@@ -167,5 +172,143 @@ class GeneRep(MessagePassing):
 
     def message_and_aggregate(self, adj_t, x):
         return spmm(adj_t, x, reduce=self.aggr)
-    
 
+
+## * Gene ID vocab: from gene name to index.
+from torchtext.vocab import Vocab
+import torchtext.vocab as torch_vocab
+from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing_extensions import Self
+from collections import Counter, OrderedDict
+from pathlib import Path
+import json
+
+
+class GeneID(Vocab):
+    def __init__(self, gene_vocab: Union[List[str], Vocab], 
+                 specials: Optional[List[str]]=None, 
+                 special_first: bool=True, 
+                #  default_token: Optional[str]='<pad>'
+                 ):
+        """
+        Vocabulary of genes, from scGPT.
+        
+        Args:
+            gene_vocab (Vocab): list or vocab: list of genes or a vocab object.
+            specials (List[str]): list of special tokens (cls, pad).
+            special_first (bool, optional): Add special token to the beginning. Defaults to True.
+            default_token (str, optional): Defaults to '<pad>'.
+        """
+        if isinstance(gene_vocab, Vocab):
+            _vocab = gene_vocab
+            if specials is not None:
+                raise ValueError(
+                    "receive non-empty specials when init from a Vocab object."
+                )
+        elif isinstance(gene_vocab, list):
+            _vocab = self._build_vocab_from_iterator(
+                gene_vocab,
+                specials=specials,
+                special_first=special_first,
+            )
+        else:
+            raise ValueError(
+                "gene_vocab must be a list of gene names or a Vocab object."
+            )
+        super().__init__(_vocab.vocab)
+        # if default_token is not None and default_token in self:
+        #     self.set_default_token(default_token)
+    
+    def _build_vocab_from_iterator(
+        self,
+        iterator: Iterable,
+        min_freq: int = 1,
+        specials: Optional[List[str]] = None,
+        special_first: bool = True,
+    ) -> Vocab:
+        """
+        init the [] vocab.
+        """
+
+        counter = Counter()
+        counter.update(iterator)
+
+        if specials is not None:
+            for tok in specials:
+                del counter[tok]
+
+        sorted_by_freq_tuples = sorted(counter.items(), key=lambda x: x[0])
+        sorted_by_freq_tuples.sort(key=lambda x: x[1], reverse=True)
+        ordered_dict = OrderedDict(sorted_by_freq_tuples)
+
+        if specials is not None:
+            if special_first:
+                specials = specials[::-1]
+            for symbol in specials:
+                ordered_dict.update({symbol: min_freq})
+                ordered_dict.move_to_end(symbol, last=not special_first)
+
+        word_vocab = torch_vocab.vocab(ordered_dict, min_freq=min_freq)
+        return word_vocab
+    
+    @classmethod
+    def from_file(cls, path: Union[Path, str]):
+        """
+        load vocab from a file, default format is json of str to index mapping.
+
+        Args:
+            path (Union[Path, str]): path of vocab
+        """
+        if isinstance(path, str):
+            path = Path(path)
+        try:
+            with path.open('r') as f:
+                token2idx = json.load(f)
+        except:
+            raise ValueError(f'{path} not found.')
+        return cls.from_dict(token2idx)
+    
+    @classmethod
+    def from_dict(cls, token2idx: Dict[str, int], 
+                #   default_token: Optional[str]='<pad>'
+                  ):
+        """
+        load vocabulary from a dict.
+
+        Args:
+            token2idx (Dict[str, int]): dict mapping gene name to indics.
+            default_token (Optional[str], optional): Defaults to '<pad>'.
+        """
+        _vocab = cls([])
+        
+        for t,i in sorted(token2idx.items(), key=lambda x: x[1]):
+            _vocab.insert_token(t, i)
+        
+        # if default_token is not None and default_token in _vocab:
+        #     _vocab.set_default_token(default_token)
+        
+        # special_tokens = ['<pad>', '<eoc>']
+        # for s in special_tokens:
+        #     if s not in _vocab:
+        #         _vocab.append_token(s)
+        
+        return _vocab
+
+    # def set_default_token(self, defualt_token):
+    #     if defualt_token not in self:
+    #         raise ValueError(f'{defualt_token} is not in the vocabulary.')
+    #     self.set_default_index(self[defualt_token])
+        
+
+# remove the genes not in vocab, gene name to idx
+def gene2idx(vocab, adata):
+    adata.var['gene_names'] = adata.var.index.tolist()
+    adata.var['id_in_vocab'] = [1 if gene in vocab else -1 for gene in adata.var["gene_name"]]
+    gene_ids_in_vocab = np.array(adata.var["id_in_vocab"])
+    print(f'match {np.sum(gene_ids_in_vocab >= 0)}/{len(gene_ids_in_vocab)} genes'
+          f'in vocabulary of size {len(vocab)}')
+    
+    adata = adata[:, adata.var["id_in_vocab"] >= 0]
+    gene_name = adata.var["gene_name"].tolist()
+    gene_idx = np.array(vocab(gene_name), dtype=int)
+    return adata, gene_idx

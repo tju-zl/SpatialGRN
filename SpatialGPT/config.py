@@ -1,10 +1,10 @@
 import argparse
 
 def config():
-    parser = argparse.ArgumentParser('Configuration File of SpatialGRN')
+    parser = argparse.ArgumentParser('Configuration File of SpatialGPT')
     
     # system configuration
-    parser.add_argument('--project_name', type=str, default='SpatialGRN')
+    parser.add_argument('--project_name', type=str, default='SpatialGPT')
     parser.add_argument('--gpu', default=0, type=int)
     parser.add_argument('--seed', type=int, default=2024)
     parser.add_argument('--version', type=str, default='1.0')
@@ -14,14 +14,17 @@ def config():
     parser.add_argument('--srt_resolution', default=2, type=int)
     parser.add_argument('--clusters', default=0, type=int)
     parser.add_argument('--max_neighbors', default=6, type=int)
+    parser.add_argument('--n_spot', default=0, type=int, help='update when read data.')
     parser.add_argument('--hvgs', default=1200, type=int)
-    parser.add_argument('--n_hops', default=3, type=int)
-    parser.add_argument('--n_randomwalk', default=[5, 10, 15], type=list, help='sample path distance of random walk')
-    parser.add_argument('--q_randomwalk', default=[1, 1.5], type=list, help='in-out of random walk')
 
     # token setting
     parser.add_argument('--n_gcn', default=3, type=int, help='number of GCN layer')
-    parser.add_argument('--n_randwalk', default=60, type=int, help='number of node2vec paths')
+    parser.add_argument('--n_randwalk', default=50, type=int, help='number of node2vec paths')
+    parser.add_argument('--gid_emb', default=50, type=int, help='number of gene embedding dim')
+    parser.add_argument('--n_token', default=60697, type=int, help='library size of gene vocab')
+    parser.add_argument('--n_randomwalk', default=[5, 15], type=list, help='interval of path distance in random walk')
+    parser.add_argument('--p_randomwalk', default=[1, 1.5], type=list, help='list, return of random walk')
+    parser.add_argument('--q_randomwalk', default=[1, 0.5], type=list, help='interval in-out of random walk')
 
     # model parameters
     parser.add_argument('--decoder', type=str, default='NB', help='ZINB, NB or MLP')

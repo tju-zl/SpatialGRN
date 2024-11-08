@@ -1,5 +1,5 @@
 import torch
-from torch.nn import Linear, Module, Softmax
+from torch.nn import Linear, Module, Softmax, Embedding, LayerNorm
 import torch.nn.functional as F
 
 
@@ -58,9 +58,24 @@ class Attention(Module):
             return att_weights, output
 
 class TransformerModel(Module):
-    def __init__(self, *args, **kwargs) -> None:
-         super().__init__(*args, **kwargs)
+    def __init__(self, ) -> None:
+         super().__init__()
          pass
      
     def forward(self, args, ):
         pass
+
+
+# get the embedding of gene id.
+class GeneIDEmb(Module):
+    def __init__(self, args):
+        super().__init__()
+        self.emb_dim = args.gid_dim  # default 50.
+        self.n_token = args.n_token
+        self.embedding = Embedding(self.n_token, self.emb_dim)
+        self.norm = LayerNorm(self.emb_dim)
+    
+    def forward(self, idx):
+        emb = self.embedding(idx)
+        emb = self.norm(emb)
+        return emb
