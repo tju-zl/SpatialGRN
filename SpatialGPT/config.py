@@ -11,6 +11,7 @@ def config():
 
     # data preparation
     parser.add_argument('--dataset_path', type=str, default='')
+    parser.add_argument('--vocab_path', type=str, default='/home/zl/SpatialGRN/Data/default_census_vocab.json')
     parser.add_argument('--srt_resolution', default=2, type=int)
     parser.add_argument('--clusters', default=0, type=int)
     parser.add_argument('--max_neighbors', default=6, type=int)
@@ -34,10 +35,12 @@ def config():
     parser.add_argument('--att_mask', default=True, action='store_true')
 
     # Transformer Module parameters
-    parser.add_argument('--d_model', type=int, default=100)
-    parser.add_argument('--n_head', type=int, default=8)
+    parser.add_argument('--d_model', type=int, default=100, help='gene id+exp dims')
+    parser.add_argument('--n_head', type=int, default=4)
     parser.add_argument('--n_layer', type=int, default=4)
     parser.add_argument('--fast', default=True, action='store_true')
+    parser.add_argument('--f_dim', type=int, default=512)
+    
 
 
     # training control
@@ -46,7 +49,7 @@ def config():
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--early_stop', default=True, action='store_true')
     parser.add_argument('--schedule_ratio', type=float, default=0.9)
-    parser.add_argument('--wegiht_decay', type=float, default=1e-6)
+    parser.add_argument('--wegiht_decay', type=float, default=0)
     parser.add_argument('--log_steps', type=int, default=10)
     parser.add_argument('--tau', type=float, default=1)
     parser.add_argument('--eval', default=False, action='store_true')

@@ -111,6 +111,10 @@ class EarlyStopping:
         print(f'Validation loss ({val_loss:.6f}) decreased. Saving model to {self.path}')
 
 
+def get_library(x):
+    return torch.sum(x, dim=1, keepdim=True)
+
+
 # gene model clustering
 def gene_cluster(emb):
     pass

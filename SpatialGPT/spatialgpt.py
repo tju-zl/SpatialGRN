@@ -6,16 +6,18 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 import numpy as np
 import wandb
+from pathlib import Path
+import json
 
-from .utils import get_device, get_log_dir, get_output_dir, EarlyStopping
-from .model import SGRNModel, ComputeLosses
-from .data import prepare_dataset, compute_edge
+from SpatialGPT.utils import get_device, get_log_dir, get_output_dir, EarlyStopping
+from SpatialGPT.model import SGModel
+from SpatialGPT.data import prepare_dataset, compute_edge
 from SpatialGPT.visualization import *
-
+from SpatialGPT.tokenizer import GeneRep, GeneID,gene2idx
 from torch.optim.lr_scheduler import StepLR
 
 
-class SpatailGRN:
+class SpatailGPT:
     def __init__(self, args, adata):
         # system environment
         args.device = get_device(args)
@@ -28,25 +30,32 @@ class SpatailGRN:
         self.log_dir = args.log_dir
         self.output_dir = args.output_dir
         
-        # adata preprocess
-        self.adata = prepare_dataset(args, adata)
-        self.x = torch.FloatTensor(self.adata.X.toarray())
-        self.edge_index = compute_edge(args, self.adata).to('cpu')
-        args.n_spots = self.x.size(0)
+        # # setting wandb
+        # wandb.init(project='SpatialGPT', config=self.args)  # following args must consistent with config
         
-        # setting wandb
-        wandb.init(project='SpatialGPT', config=self.args)  # following args must consistent with config
-        
+        self.vocab = GeneID.from_file(Path(args.vocab_path))
         # model initial
-        self.model = SGRNModel(args).to(args.device)
-        self.compute_losses = ComputeLosses(args).to(args.device)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.wegiht_decay)
-        self.scheduler = StepLR(self.optimizer, step_size=1, gamma=0.99)    # !检查
-        self.early_stopping = EarlyStopping(patience=10, delta=0.001, path=self.output_dir+'/best_model.pt')
+        self.model = SGModel(args).to(args.device)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=args.lr, 
+                                          weight_decay=args.wegiht_decay, eps=1e-4 if args.amp else 1e-8)
+        self.scheduler = StepLR(self.optimizer, step_size=1, gamma=0.9)
+        # self.early_stopping = EarlyStopping(patience=10, delta=0.001, path=self.output_dir+'/best_model.pt')
+        self.scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
         self.args = args
-
         
-    def fit(self, emb):
+
+    def adata2tensor(self, adata):
+        adata, self.gene_idx = gene2idx(self.vocab, adata)
+        self.adata = prepare_dataset(self.args, adata)
+        self.x = torch.FloatTensor(self.adata.X.toarray())
+        self.edge_index = compute_edge(self.args, self.adata).to('cpu')
+        self.args.n_spots = self.x.size(0)
+        self.exp_token = GeneRep(self.args)
+    
+        
+    def fit(self, adata):
+        self.adata2tensor(adata)
+        emb = self.exp_token(self.x, self.edge_index)
         if emb.requires_grad:
             print(emb.requires_grad)
             emb = emb.detach()
@@ -61,8 +70,10 @@ class SpatailGRN:
             for batch in dataloader:
                 embedding, xx = batch
                 self.optimizer.zero_grad()
-                output = self.model(embedding.to(self.args.device))[-1]
-                loss = self.compute_losses.loss(xx.to(self.args.device), output)
+                emb, loss = self.model(xx.to(self.args.device), 
+                                       embedding.to(self.args.device),
+                                       self.gene_idx.to(self.args.device))
+                
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
                 self.optimizer.step()
@@ -83,6 +94,21 @@ class SpatailGRN:
         # save model
         if not self.early_stopping.early_stop:
             torch.save(self.model.state_dict(), self.output_dir+'/best_model.pt')
+
+    def batch_prepare(self, adata_list):
+        # adata preprocess
+        for adata in adata_list:
+            adata = prepare_dataset(self.args, adata)
+            x = torch.FloatTensor(adata.X.toarray())
+            edge_index = compute_edge(self.args, self.adata).to('cpu')
+            self.args.n_spots = x.size(0)
+
+
+    def batch_fit(self, adata_list, emb):
+        pass
+    
+    
+
 
     def eval(self, emb):
         if emb.requires_grad:
