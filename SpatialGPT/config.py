@@ -50,7 +50,7 @@ def config():
     parser.add_argument('--early_stop', default=True, action='store_true')
     parser.add_argument('--schedule_ratio', type=float, default=0.9)
     parser.add_argument('--wegiht_decay', type=float, default=0)
-    parser.add_argument('--log_steps', type=int, default=10)
+    parser.add_argument('--log_steps', type=int, default=1)
     parser.add_argument('--tau', type=float, default=1)
     parser.add_argument('--eval', default=False, action='store_true')
     parser.add_argument('--amp', default=True, action='store_true', help='Mixed precision')

@@ -68,46 +68,73 @@ class SpatailGPT:
         for ep in trange(self.args.max_epoch):
             running_loss = 0.0
             for batch in dataloader:
-                embedding, xx = batch
+                with torch.cuda.amp.autocast(enabled=self.args.amp):
+                    embedding, xx = batch
+                    emb, loss = self.model(xx.to(self.args.device), 
+                                        embedding.to(self.args.device),
+                                        self.gene_idx.to(self.args.device))
+                    
                 self.optimizer.zero_grad()
-                emb, loss = self.model(xx.to(self.args.device), 
-                                       embedding.to(self.args.device),
-                                       self.gene_idx.to(self.args.device))
-                
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 5)
-                self.optimizer.step()
-                self.scheduler.step()
+                self.scaler.scale(loss).backward()
+                self.scaler.unscale_(self.optimizer)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
                 running_loss += loss.item()
             losses.append(running_loss)
-            # earlystopping function to add.
-            self.early_stopping(running_loss, self.model)
-            if self.early_stopping.early_stop:
-                print('Early Stopping.')
-                break
+            self.scheduler.step()
+            
+            # # earlystopping function to add.
+            # self.early_stopping(running_loss, self.model)
+            # if self.early_stopping.early_stop:
+            #     print('Early Stopping.')
+            #     break
+            
             # print loss info
             if ep % (self.args.max_epoch/self.args.log_steps) == 0 and self.args.visualize:
                     print(f'EP[%4d]: loss=%.4f.' % (ep, loss.item()))
 
         # plotting loss
         plot_loss_curve(self.args, losses)
+        torch.save(self.model.state_dict(), self.output_dir+'/best_model.pt')
         # save model
-        if not self.early_stopping.early_stop:
-            torch.save(self.model.state_dict(), self.output_dir+'/best_model.pt')
+        # if not self.early_stopping.early_stop:
+        #     torch.save(self.model.state_dict(), self.output_dir+'/best_model.pt')
 
-    def batch_prepare(self, adata_list):
-        # adata preprocess
+    def batch_fit(self, adata_list):
+        # get the stoken before training
+        emb_list = []
         for adata in adata_list:
-            adata = prepare_dataset(self.args, adata)
-            x = torch.FloatTensor(adata.X.toarray())
-            edge_index = compute_edge(self.args, self.adata).to('cpu')
-            self.args.n_spots = x.size(0)
+            self.adata2tensor(adata)
+            emb_list.append(self.exp_token(self.x, self.edge_index).detach())
+        
+        self.model.train()
+        losses = []
+        for ep in trange(self.args.max_epoch):
+            running_loss = 0.0
+            for i, emb in enumerate(emb_list):
+                self.adata2tensor(adata_list[i])
+                dataset = TensorDataset(emb, self.x)
+                dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True)
+                for batch in dataloader:
+                    with torch.cuda.amp.autocast(enabled=self.args.amp):
+                        embedding, xx = batch
+                        emb, loss = self.model(xx.to(self.args.device), 
+                                            embedding.to(self.args.device),
+                                            self.gene_idx.to(self.args.device))
+                        
+                    self.optimizer.zero_grad()
+                    self.scaler.scale(loss).backward()
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                    running_loss += loss.item()
+            losses.append(running_loss)
+            self.scheduler.step()
 
 
-    def batch_fit(self, adata_list, emb):
-        pass
-    
-    
+
 
 
     def eval(self, emb):
