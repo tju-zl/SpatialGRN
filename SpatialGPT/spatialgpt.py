@@ -63,6 +63,7 @@ class SpatailGPT:
         dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True)
         
         self.model.train()
+        self.args.eval=False
         losses = []
         
         for ep in trange(self.args.max_epoch):
@@ -70,7 +71,7 @@ class SpatailGPT:
             for batch in dataloader:
                 with torch.cuda.amp.autocast(enabled=self.args.amp):
                     embedding, xx = batch
-                    emb, loss = self.model(xx.to(self.args.device), 
+                    emb, att, loss = self.model(xx.to(self.args.device), 
                                         embedding.to(self.args.device),
                                         self.gene_idx.to(self.args.device))
                     
@@ -109,6 +110,7 @@ class SpatailGPT:
             emb_list.append(self.exp_token(self.x, self.edge_index).detach())
         
         self.model.train()
+        self.args.eval=False
         losses = []
         for ep in trange(self.args.max_epoch):
             running_loss = 0.0
@@ -119,7 +121,7 @@ class SpatailGPT:
                 for batch in dataloader:
                     with torch.cuda.amp.autocast(enabled=self.args.amp):
                         embedding, xx = batch
-                        emb, loss = self.model(xx.to(self.args.device), 
+                        emb, att, loss = self.model(xx.to(self.args.device), 
                                             embedding.to(self.args.device),
                                             self.gene_idx.to(self.args.device))
                         
@@ -133,11 +135,8 @@ class SpatailGPT:
             losses.append(running_loss)
             self.scheduler.step()
 
-
-
-
-
-    def eval(self, emb):
+    # pretained downsteam task
+    def eval_emb(self, emb):
         if emb.requires_grad:
             print(emb.requires_grad)
             emb = emb.detach()
@@ -161,7 +160,49 @@ class SpatailGPT:
                     with open(z_save_path, 'ab') as f:
                         np.save(f, z.cpu().numpy())
         return att_save_path, z_save_path
-        # todo some functions of downstream analysis
-        # self.adata.obsm['grn_mat'] = attention.numpy()
-        # return self.model(emb.to(self.args.device))[0].detach().cpu()
-        # return self.adata
+# todo some functions of downstream analysis
+# self.adata.obsm['grn_mat'] = attention.numpy()
+# return self.model(emb.to(self.args.device))[0].detach().cpu()
+# return self.adata
+    def eval_adata(self, adata):
+        self.adata2tensor(adata)
+        emb = self.exp_token(self.x, self.edge_index)
+        if emb.requires_grad:
+            print(emb.requires_grad)
+            emb = emb.detach()
+        dataset = TensorDataset(emb, self.x)
+        dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True)
+        
+        self.model.eval()
+        losses = []
+        
+        for ep in trange(self.args.max_epoch):
+            running_loss = 0.0
+            for batch in dataloader:
+                with torch.cuda.amp.autocast(enabled=self.args.amp):
+                    embedding, xx = batch
+                    emb, att, loss = self.model(xx.to(self.args.device), 
+                                        embedding.to(self.args.device),
+                                        self.gene_idx.to(self.args.device))
+                    
+                self.optimizer.zero_grad()
+                self.scaler.scale(loss).backward()
+                self.scaler.unscale_(self.optimizer)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                running_loss += loss.item()
+            losses.append(running_loss)
+            self.scheduler.step()
+            
+            # print loss info
+            if ep % (self.args.max_epoch/self.args.log_steps) == 0 and self.args.visualize:
+                    print(f'EP[%4d]: loss=%.4f.' % (ep, loss.item()))
+                    
+                    
+    # TODO Finetune task
+    def finetune_adata(self, args_new, adata):
+        pass
+    
+    def finetune_emb(self, args_new, emb): # finetune emb
+        pass

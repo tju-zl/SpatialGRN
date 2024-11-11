@@ -26,10 +26,10 @@ class SGModel(Module):
         stoken = torch.cat((gene_id_emb, stoken), dim=-1)
         cls_token = self.cls_token.expand(stoken.shape[0], -1, -1)
         spatial_token = torch.cat((cls_token, stoken), dim=-2)
-        emb = self.encoder(spatial_token)
+        emb, att = self.encoder(spatial_token)
         x_rate, theta, cell_exp = self.decoder(emb)
         loss = self.total_loss(x, x_rate, theta, cell_exp)
-        return emb, loss
+        return emb, att, loss
 
 
 
