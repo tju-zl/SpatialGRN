@@ -19,9 +19,9 @@ def config():
     parser.add_argument('--hvgs', default=1200, type=int)
 
     # token setting
-    parser.add_argument('--n_gcn', default=5, type=int, help='number of GCN layer')
+    parser.add_argument('--n_gcn', default=4, type=int, help='number of GCN layer')
     parser.add_argument('--n_randwalk', default=50, type=int, help='number of node2vec paths')
-    parser.add_argument('--gid_emb', default=45, type=int, help='number of gene embedding dim')
+    parser.add_argument('--gid_dim', default=45, type=int, help='number of gene embedding dim')
     parser.add_argument('--n_token', default=60697, type=int, help='library size of gene vocab')
     parser.add_argument('--n_randomwalk', default=[5, 15], type=list, help='interval of path distance in random walk')
     parser.add_argument('--p_randomwalk', default=[1, 1.5], type=list, help='list, return of random walk')
@@ -44,11 +44,11 @@ def config():
     # training control
     parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--max_epoch', type=int, default=20)
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=64)
     # parser.add_argument('--early_stop', default=True, action='store_true')
     parser.add_argument('--schedule_ratio', type=float, default=0.9)
     parser.add_argument('--wegiht_decay', type=float, default=0)
-    parser.add_argument('--log_steps', type=int, default=1)
+    parser.add_argument('--log_steps', type=int, default=20)
     parser.add_argument('--tau', type=float, default=1)
     # parser.add_argument('--eval', default=False, action='store_true')
     parser.add_argument('--amp', default=True, action='store_true', help='Mixed precision')

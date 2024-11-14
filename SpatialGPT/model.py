@@ -4,13 +4,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from .module import *
+from .utils import get_library
 
 
 ## * SpatialGPT overall model
 class SGModel(Module):
     def __init__(self, args, ):
         super().__init__()
-        
+        self.d_model = args.d_model
         self.cls_token = nn.Parameter(torch.zeros(1,1,self.d_model))
         self.gene_id = GeneIDEmb(args)
     
@@ -23,11 +24,13 @@ class SGModel(Module):
     def forward(self, x, stoken, idx):
         # token_dim: [batch x genes x emb]
         gene_id_emb = self.gene_id(idx).expand(stoken.shape[0], -1, -1)
+        # print(self.gene_id(idx).shape, gene_id_emb.shape, stoken.shape)
         stoken = torch.cat((gene_id_emb, stoken), dim=-1)
         cls_token = self.cls_token.expand(stoken.shape[0], -1, -1)
         spatial_token = torch.cat((cls_token, stoken), dim=-2)
         emb, att = self.encoder(spatial_token)
-        x_rate, theta, cell_exp = self.decoder(emb)
+        l = get_library(x)
+        x_rate, theta, cell_exp = self.decoder(l, emb)
         loss = self.total_loss(x, x_rate, theta, cell_exp)
         return emb, att, loss
 

@@ -125,7 +125,7 @@ class GeneRep(MessagePassing):
         super().__init__(flow=args.flow, aggr='add')
         self.normalize = normalize
         self.n_gcns = args.n_gcn
-        self.n_layers = args.n_gcn + args.n_randwalk
+        self.n_layers = 1 + args.n_gcn + args.n_randwalk
         self.n_walks = args.n_randwalk
         self.add_self_loops = add_self_loops
         self.improved = improved
@@ -300,15 +300,32 @@ class GeneID(Vocab):
     #     self.set_default_index(self[defualt_token])
         
 
+# # remove the genes not in vocab, gene name to idx
+# def gene2idx(vocab, adata):
+#     adata.var['gene_names'] = adata.var.index.tolist()
+#     adata.var['id_in_vocab'] = [1 if gene in vocab else -1 for gene in adata.var["gene_names"]]
+#     gene_ids_in_vocab = np.array(adata.var["id_in_vocab"])
+#     print(f'match {np.sum(gene_ids_in_vocab >= 0)}/{len(gene_ids_in_vocab)} genes'
+#           f'in vocabulary of size {len(vocab)}')
+    
+#     adata = adata[:, adata.var["id_in_vocab"] >= 0]
+#     gene_name = adata.var["gene_names"].tolist()
+#     gene_idx = np.array(vocab(gene_name), dtype=int)
+#     return adata, gene_idx
+
 # remove the genes not in vocab, gene name to idx
-def gene2idx(vocab, adata):
+def gene_in_voc(vocab, adata):
     adata.var['gene_names'] = adata.var.index.tolist()
-    adata.var['id_in_vocab'] = [1 if gene in vocab else -1 for gene in adata.var["gene_name"]]
+    adata.var['id_in_vocab'] = [1 if gene in vocab else -1 for gene in adata.var["gene_names"]]
     gene_ids_in_vocab = np.array(adata.var["id_in_vocab"])
-    print(f'match {np.sum(gene_ids_in_vocab >= 0)}/{len(gene_ids_in_vocab)} genes'
+    print(f'match {np.sum(gene_ids_in_vocab >= 0)}/{len(gene_ids_in_vocab)} genes '
           f'in vocabulary of size {len(vocab)}')
     
     adata = adata[:, adata.var["id_in_vocab"] >= 0]
-    gene_name = adata.var["gene_name"].tolist()
+    return adata
+
+
+def gene2idx(vocab, adata):
+    gene_name = adata.var["gene_names"].tolist()
     gene_idx = np.array(vocab(gene_name), dtype=int)
-    return adata, gene_idx
+    return gene_idx

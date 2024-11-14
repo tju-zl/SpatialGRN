@@ -318,7 +318,7 @@ class TransformerEncoder(Module):
 
         enc_layer = "encoder_layer"
         why_not_sparsity_fast_path = ''
-        if not isinstance(encoder_layer, torch.nn.TransformerEncoderLayer):
+        if not isinstance(encoder_layer, TransformerEncoderLayer):
             why_not_sparsity_fast_path = f"{enc_layer} was not TransformerEncoderLayer"
         elif encoder_layer.norm_first :
             why_not_sparsity_fast_path = f"{enc_layer}.norm_first was True"
@@ -547,7 +547,7 @@ class TransformerModel(Module):
         
         transformer_layer = TransformerEncoderLayer(self.d_model, self.n_head, 
                                                     self.f_dim, self.dropout,
-                                                    batch_first=True, norm_first=True)
+                                                    batch_first=True, norm_first=False)
         self.transformer_encoder = TransformerEncoder(transformer_layer, self.n_layer)
     
     def forward(self, tokens):
@@ -562,8 +562,8 @@ class TaskDecoder(Module):
         self.exp_decoder = ExpDecoder(args)
         self.dropout_sim = DropoutSim(args)
         
-    def forward(self, x):
-        x_rate, theta = self.cls_decoder(x[:,0,:])
+    def forward(self, l, x):
+        x_rate, theta = self.cls_decoder(l, x[:,0,:])
         cell_exp = self.exp_decoder(x[:,1:,:])
         return x_rate, theta, cell_exp
     
@@ -578,13 +578,14 @@ class ClsDecoder(Module):
                                   LeakyReLU(),
                                   Linear(self.d_model, self.d_model),
                                   LeakyReLU(),
-                                  Linear(self.d_model, self.out_dim))
+                                  Linear(self.d_model, self.out_dim),
+                                  Softmax(dim=-1))
         self.esp = 1e-5
         self.log_theta = torch.nn.Parameter(torch.randn(self.out_dim), requires_grad=True)
         
-    def forward(self, x):
-        l = get_library(x)
+    def forward(self, l, x):
         x_rate = l * self.recover(x)
+        # print(l, x_rate)
         theta = F.softplus(self.log_theta) + self.esp
         return x_rate, theta
 
@@ -764,7 +765,7 @@ def mask_feature(x, mask_prob):
 class GeneIDEmb(Module):
     def __init__(self, args):
         super().__init__()
-        self.emb_dim = args.gid_dim  # default 50.
+        self.emb_dim = args.gid_dim  # default 45.
         self.n_token = args.n_token
         self.embedding = Embedding(self.n_token, self.emb_dim)
         self.norm = LayerNorm(self.emb_dim)

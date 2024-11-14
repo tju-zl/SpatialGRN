@@ -64,7 +64,11 @@ def random_walk_path(args, edge_index):
         walks_int.append([[int(node) for node in walk] for walk in edge])
     
     edge_index_list = []
-    n_walk_list = [item for item in args.n_randomwalk for _ in range(2)]
+    num_q = len(np.arange(q_rm[0], q_rm[1], -0.1))
+    range_n = range(n_rm[0], n_rm[1], 2)
+    num_p = len(p_rm)
+    n_walk_list = [n for q in range(num_q) for n in range_n for p in range(num_p)]
+    
     for k in range(len(n_walk_list)):
         edges = [[],[]]
         for i in range(args.n_spots):
@@ -72,7 +76,20 @@ def random_walk_path(args, edge_index):
                 edges[0].append(walks_int[k][i][j])
                 edges[1].append(i)
         edge_index_list.append(torch.tensor(np.array(edges), dtype=torch.long))
+    print(f'generate [{len(n_walk_list)}] edge_index')
     return edge_index_list
+    
+    
+    # edge_index_list = []
+    # n_walk_list = [item for item in args.n_randomwalk for _ in range(2)]
+    # for k in range(len(n_walk_list)):
+    #     edges = [[],[]]
+    #     for i in range(args.n_spots):
+    #         for j in range(n_walk_list[k]):
+    #             edges[0].append(walks_int[k][i][j])
+    #             edges[1].append(i)
+    #     edge_index_list.append(torch.tensor(np.array(edges), dtype=torch.long))
+    # return edge_index_list
 
 
 # find neighbors of a node

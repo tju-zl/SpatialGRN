@@ -9,16 +9,16 @@ import wandb
 from pathlib import Path
 import json
 
-from SpatialGPT.utils import get_device, get_log_dir, get_output_dir, EarlyStopping
+from SpatialGPT.utils import get_device, get_log_dir, get_output_dir, EarlyStopping, get_library
 from SpatialGPT.model import SGModel
 from SpatialGPT.data import prepare_dataset, compute_edge
 from SpatialGPT.visualization import *
-from SpatialGPT.tokenizer import GeneRep, GeneID,gene2idx
+from SpatialGPT.tokenizer import GeneRep, GeneID, gene_in_voc, gene2idx
 from torch.optim.lr_scheduler import StepLR
 
 
 class SpatailGPT:
-    def __init__(self, args, adata):
+    def __init__(self, args):
         # system environment
         args.device = get_device(args)
         args.log_dir = get_log_dir(args)
@@ -45,8 +45,9 @@ class SpatailGPT:
         
 
     def adata2tensor(self, adata):
-        adata, self.gene_idx = gene2idx(self.vocab, adata)
+        adata = gene_in_voc(self.vocab, adata)
         self.adata = prepare_dataset(self.args, adata)
+        self.gene_idx = gene2idx(self.vocab, self.adata)
         self.x = torch.FloatTensor(self.adata.X.toarray())
         self.edge_index = compute_edge(self.args, self.adata).to('cpu')
         self.args.n_spots = self.x.size(0)
@@ -56,9 +57,8 @@ class SpatailGPT:
     def fit(self, adata):
         self.adata2tensor(adata)
         emb = self.exp_token(self.x, self.edge_index)
-        if emb.requires_grad:
-            print(emb.requires_grad)
-            emb = emb.detach()
+        # print(emb, emb.requires_grad)
+
         dataset = TensorDataset(emb, self.x)
         dataloader = DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True)
         
@@ -73,7 +73,7 @@ class SpatailGPT:
                     embedding, xx = batch
                     latent, att, loss = self.model(xx.to(self.args.device), 
                                         embedding.to(self.args.device),
-                                        self.gene_idx.to(self.args.device))
+                                        torch.tensor(self.gene_idx).to(self.args.device))
                     
                 self.optimizer.zero_grad()
                 self.scaler.scale(loss).backward()
@@ -92,8 +92,8 @@ class SpatailGPT:
             #     break
             
             # print loss info
-            if ep % (self.args.max_epoch/self.args.log_steps) == 0 and self.args.visualize:
-                    print(f'EP[%4d]: loss=%.4f.' % (ep, loss.item()))
+            if ep % (self.args.max_epoch/self.args.log_steps) == 0 and self.args.visual:
+                    print(f'EP[%2d]: loss=%.4f.' % (ep+1, running_loss))
 
         # plotting loss
         plot_loss_curve(self.args, losses)
