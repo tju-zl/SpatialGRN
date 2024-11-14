@@ -71,7 +71,7 @@ class SpatailGPT:
             for batch in dataloader:
                 with torch.cuda.amp.autocast(enabled=self.args.amp):
                     embedding, xx = batch
-                    emb, att, loss = self.model(xx.to(self.args.device), 
+                    latent, att, loss = self.model(xx.to(self.args.device), 
                                         embedding.to(self.args.device),
                                         self.gene_idx.to(self.args.device))
                     
@@ -121,7 +121,7 @@ class SpatailGPT:
                 for batch in dataloader:
                     with torch.cuda.amp.autocast(enabled=self.args.amp):
                         embedding, xx = batch
-                        emb, att, loss = self.model(xx.to(self.args.device), 
+                        latent, att, loss = self.model(xx.to(self.args.device), 
                                             embedding.to(self.args.device),
                                             self.gene_idx.to(self.args.device))
                         

@@ -2,5 +2,5 @@ Data/
 .vscode/
 Log/
 Output/
-SpatialGRN/__pycache__/
+SpatialGPT/__pycache__/
 checkpoints

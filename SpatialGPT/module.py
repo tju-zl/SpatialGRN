@@ -759,7 +759,23 @@ def mask_feature(x, mask_prob):
     x_masked = x * mask
     return x_masked
 
-# ! unused code
+
+# get the embedding of gene id.
+class GeneIDEmb(Module):
+    def __init__(self, args):
+        super().__init__()
+        self.emb_dim = args.gid_dim  # default 50.
+        self.n_token = args.n_token
+        self.embedding = Embedding(self.n_token, self.emb_dim)
+        self.norm = LayerNorm(self.emb_dim)
+    
+    def forward(self, idx):
+        emb = self.embedding(idx)
+        emb = self.norm(emb)
+        return emb
+
+
+# ! ============= unused code ============== 
 # tanh attention
 class BiAttention(Module):
     def __init__(self, args, embed_dim):
@@ -815,21 +831,6 @@ class Attention(Module):
             return att_weights, output
 
 
-# get the embedding of gene id.
-class GeneIDEmb(Module):
-    def __init__(self, args):
-        super().__init__()
-        self.emb_dim = args.gid_dim  # default 50.
-        self.n_token = args.n_token
-        self.embedding = Embedding(self.n_token, self.emb_dim)
-        self.norm = LayerNorm(self.emb_dim)
-    
-    def forward(self, idx):
-        emb = self.embedding(idx)
-        emb = self.norm(emb)
-        return emb
-
-
 class SGModels(Module):
     def __init__(self, args) -> None:
         super().__init__()
@@ -861,3 +862,4 @@ class SGModels(Module):
         output = self.decoder(z)
         
         return att_weights, z, output
+# ! ================ unused code end =================
