@@ -95,6 +95,10 @@ class SpatailGPT:
             if ep % (self.args.max_epoch/self.args.log_steps) == 0 and self.args.visual:
                     print(f'EP[%2d]: loss=%.4f.' % (ep+1, running_loss))
 
+        del latent
+        del att
+        del batch
+        torch.cuda.empty_cache()
         # plotting loss
         plot_loss_curve(self.args, losses)
         torch.save(self.model.state_dict(), self.output_dir+'/best_model.pt')
@@ -107,7 +111,7 @@ class SpatailGPT:
         emb_list = []
         for adata in adata_list:
             self.adata2tensor(adata)
-            emb_list.append(self.exp_token(self.x, self.edge_index).detach())
+            emb_list.append(self.exp_token(self.x, self.edge_index).clone().detach())
         
         self.model.train()
         self.args.eval=False
@@ -123,7 +127,7 @@ class SpatailGPT:
                         embedding, xx = batch
                         latent, att, loss = self.model(xx.to(self.args.device), 
                                             embedding.to(self.args.device),
-                                            self.gene_idx.to(self.args.device))
+                                            torch.tensor(self.gene_idx).to(self.args.device))
                         
                     self.optimizer.zero_grad()
                     self.scaler.scale(loss).backward()
@@ -134,7 +138,43 @@ class SpatailGPT:
                     running_loss += loss.item()
             losses.append(running_loss)
             self.scheduler.step()
+        del latent
+        del att
+        del batch
+        torch.cuda.empty_cache()
+        torch.save(self.model.state_dict(), self.output_dir+'/pretrained_model.pt')
+    
+    def get_cls(self, adata, eval_batch):
+        cls_path =  self.output_dir+'/cls.npy'
+        self.adata2tensor(adata)
+        emb = self.exp_token(self.x, self.edge_index)
 
+        dataset = TensorDataset(emb, self.x)
+        dataloader = DataLoader(dataset, batch_size=eval_batch, shuffle=False)
+        
+        self.model.eval()
+        self.args.eval=True
+        cls_list = [] 
+        with torch.no_grad():
+            for batch in dataloader:
+                with torch.cuda.amp.autocast(enabled=self.args.amp):
+                    embedding, xx = batch
+                    latent, att, loss = self.model(xx.to(self.args.device), 
+                                        embedding.to(self.args.device),
+                                        torch.tensor(self.gene_idx).to(self.args.device))
+                cls_list.append(latent[:,0,:].cpu().numpy())
+                latent_cls = np.vstack(cls_list)
+                np.save(cls_path, latent_cls)
+
+        print(f'get cls with shape {latent_cls.shape}')
+        return cls_path
+    
+    def get_att(self, adata, eval_batch, idx=None):
+        pass
+
+        
+            
+    
     # pretained downsteam task
     def eval_emb(self, emb):
         if emb.requires_grad:

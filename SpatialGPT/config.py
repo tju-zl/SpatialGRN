@@ -29,7 +29,7 @@ def config():
 
     # model parameters
     parser.add_argument('--decoder', type=str, default='NB', help='ZINB, NB or MLP')
-    parser.add_argument('--latent_dim', type=int, default=64, help='dim of QKV')
+    parser.add_argument('--latent_dim', type=int, default=100, help='dim of QKV')
     parser.add_argument('--flow', type=str, default='source_to_target')
     parser.add_argument('--dropout', type=float, default=0.2)
     # parser.add_argument('--att_mask', default=True, action='store_true')
@@ -39,10 +39,10 @@ def config():
     parser.add_argument('--n_head', type=int, default=4)
     parser.add_argument('--n_layer', type=int, default=4)
     parser.add_argument('--fast', default=True, action='store_true')
-    parser.add_argument('--f_dim', type=int, default=512, help='forward dim')
+    parser.add_argument('--f_dim', type=int, default=64, help='forward dim')
 
     # training control
-    parser.add_argument('--lr', type=float, default=1e-4)
+    parser.add_argument('--lr', type=float, default=1e-5)
     parser.add_argument('--max_epoch', type=int, default=20)
     parser.add_argument('--batch_size', type=int, default=64)
     # parser.add_argument('--early_stop', default=True, action='store_true')

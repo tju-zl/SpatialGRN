@@ -2,5 +2,6 @@ Data/
 .vscode/
 Log/
 Output/
-SpatialGPT/__pycache__/
 checkpoints
+SpatialGPT/__pycache__
+TestNotebook/

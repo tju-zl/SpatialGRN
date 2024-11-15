@@ -23,7 +23,7 @@ def get_device(args):
 def get_log_dir(args):
     if not os.path.exists('../Log/'):
         os.makedirs('../Log/')
-    log_dir = '../Log/' + '_'.join([os.path.basename(args.dataset_path).split('.')[0], args.version])
+    log_dir = '../Log/' + '_'.join([os.path.basename(os.path.normpath(args.dataset_path)).split('.')[0], args.version])
     return log_dir
 
 
@@ -31,7 +31,7 @@ def get_log_dir(args):
 def get_output_dir(args):
     if not os.path.exists('../Output/'):
         os.makedirs('../Output/')
-    output_dir = '../Output/' + '_'.join([os.path.basename(args.dataset_path), args.version])
+    output_dir = '../Output/' + '_'.join([os.path.basename(os.path.normpath(args.dataset_path)), args.version])
     return output_dir
 
 
@@ -76,7 +76,7 @@ def random_walk_path(args, edge_index):
                 edges[0].append(walks_int[k][i][j])
                 edges[1].append(i)
         edge_index_list.append(torch.tensor(np.array(edges), dtype=torch.long))
-    print(f'generate [{len(n_walk_list)}] edge_index')
+    print(f'generate [{len(n_walk_list)}] random paths.')
     return edge_index_list
     
     
